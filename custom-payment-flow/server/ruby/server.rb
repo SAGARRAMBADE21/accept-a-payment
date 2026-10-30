@@ -55,7 +55,7 @@ post '/create-payment-intent' do
   payment_method_type = data['paymentMethodType']
   currency = data['currency']
   params = {
-    payment_method_types: payment_method_type == "link" ? ["link", "card"] : [payment_method_type],
+    automatic_payment_methods: { enabled: true },
     amount: 5999, # Charge the customer 59.99 in the given currency.
     currency: currency
   }

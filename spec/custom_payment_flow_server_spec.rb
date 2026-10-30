@@ -25,7 +25,7 @@ RSpec.describe "custom-payment-flow integration" do
           expect(resp).to have_key('clientSecret')
           pi_id = resp['clientSecret'].split('_secret').first
           payment_intent = Stripe::PaymentIntent.retrieve(pi_id)
-          expect(payment_intent.payment_method_types).to eq([pm_type.to_s])
+          expect(payment_intent.payment_method_types).to include(pm_type.to_s)
           expect(payment_intent.currency.upcase).to eq(currency.upcase)
         end
       end
@@ -43,15 +43,26 @@ RSpec.describe "custom-payment-flow integration" do
       expect(payment_intent.payment_method_options.acss_debit.mandate_options.transaction_type).not_to be_nil
     end
 
-    it 'fails gracefully if missmatched currency and payment method type' do
+    it 'excludes payment method types that do not support the currency' do
       resp, status = post_json('/create-payment-intent', {
         currency: 'usd',
         paymentMethodType: 'au_becs_debit',
       })
+      expect(status).to eq(200), resp.to_s
+      pi_id = resp['clientSecret'].split('_secret').first
+      payment_intent = Stripe::PaymentIntent.retrieve(pi_id)
+      expect(payment_intent.payment_method_types).not_to include('au_becs_debit')
+    end
+
+    it 'fails gracefully if the currency is invalid' do
+      resp, status = post_json('/create-payment-intent', {
+        currency: 'xyz',
+        paymentMethodType: 'card',
+      })
       expect(status).to eq(400)
       expect(resp).to have_key('error')
       expect(resp['error']).to have_key('message')
-      expect(resp['error']['message']).to match(/This payment method is available to Stripe accounts in AU/i)
+      expect(resp['error']['message']).to match(/currency/i)
     end
   end
 end
