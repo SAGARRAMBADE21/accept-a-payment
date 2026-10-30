@@ -93,7 +93,7 @@ app.post('/create-payment-intent', async (req, res) => {
   if (calculateTax) {
     let taxCalculation = await calculate_tax(orderAmount, currency)
     params = {
-      payment_method_types: paymentMethodType === 'link' ? ['link', 'card'] : [paymentMethodType],
+      automatic_payment_methods: { enabled: true },
       amount: taxCalculation.amount_total,
       currency: currency,
       metadata: { tax_calculation: taxCalculation.id }
@@ -101,7 +101,7 @@ app.post('/create-payment-intent', async (req, res) => {
   }
   else {
     params = {
-      payment_method_types: paymentMethodType === 'link' ? ['link', 'card'] : [paymentMethodType],
+      automatic_payment_methods: { enabled: true },
       amount: orderAmount,
       currency: currency,
     }
@@ -131,6 +131,9 @@ app.post('/create-payment-intent', async (req, res) => {
     params.payment_method_data = {
       type: 'customer_balance',
     }
+    // Confirmed server-side without a return_url, so only accept payment
+    // methods that don't redirect.
+    params.automatic_payment_methods = { enabled: true, allow_redirects: 'never' }
     params.confirm = true
     params.customer = req.body.customerId || await stripe.customers.create().then(data => data.id)
   }

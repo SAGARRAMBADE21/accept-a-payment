@@ -52,16 +52,14 @@ export async function POST(req: NextRequest) {
     if (calculateTax) {
       const taxCalculation = await calculate_tax(orderAmount, currency);
       params = {
-        payment_method_types:
-          paymentMethodType === "link" ? ["link", "card"] : [paymentMethodType],
+        automatic_payment_methods: { enabled: true },
         amount: taxCalculation.amount_total,
         currency: currency,
         metadata: { tax_calculation: taxCalculation.id },
       };
     } else {
       params = {
-        payment_method_types:
-          paymentMethodType === "link" ? ["link", "card"] : [paymentMethodType],
+        automatic_payment_methods: { enabled: true },
         amount: orderAmount,
         currency: currency,
       };
@@ -89,6 +87,12 @@ export async function POST(req: NextRequest) {
     } else if (paymentMethodType === "customer_balance") {
       params.payment_method_data = {
         type: "customer_balance",
+      };
+      // Confirmed server-side without a return_url, so only accept payment
+      // methods that don't redirect.
+      params.automatic_payment_methods = {
+        enabled: true,
+        allow_redirects: "never",
       };
       params.confirm = true;
       params.customer =

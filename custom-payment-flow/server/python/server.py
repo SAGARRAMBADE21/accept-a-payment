@@ -82,11 +82,10 @@ def create_payment():
     # See the documentation [0] for the full list of supported parameters.
     #
     # [0] https://stripe.com/docs/api/payment_intents/create
-    formatted_payment_method_type = ['link', 'card'] if payment_method_type == 'link' else [payment_method_type]
     if calcuateTax:
         taxCalculation = calculate_tax(orderAmount, currency)
         params = {
-            'payment_method_types': formatted_payment_method_type,
+            'automatic_payment_methods': {'enabled': True},
             'amount': taxCalculation['amount_total'],
             'currency': currency,
             "metadata": {
@@ -95,7 +94,7 @@ def create_payment():
         } 
     else:
         params = {
-            'payment_method_types': formatted_payment_method_type,
+            'automatic_payment_methods': {'enabled': True},
             'amount': orderAmount,
             'currency': currency
         }
